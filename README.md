@@ -49,24 +49,135 @@ The package allows extensive customization of the generated API reference throug
 
 ## Usage 📚
 
-To use the Scalar package as a provider in your Go project for creating API references, follow the example below:
+### Framework Middleware 🎯
+
+Scalar Go provides ready-to-use middleware for popular Go web frameworks:
+
+#### Fiber
 
 ```go
 package main
 
 import (
 	"log"
-	"simple_api/middlewares"
-
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/watchakorn-18k/scalar-go"
+	scalarfiber "github.com/watchakorn-18k/scalar-go/middleware/fiber"
+)
+
+func main() {
+	app := fiber.New()
+
+	app.Use("/docs", scalarfiber.Handler(&scalar.Options{
+		SpecURL: "./swagger.yaml",
+		CustomOptions: scalar.CustomOptions{
+			PageTitle: "My API Documentation",
+		},
+		DarkMode: true,
+	}))
+
+	log.Fatal(app.Listen(":3000"))
+}
+```
+
+#### Gin
+
+```go
+package main
+
+import (
+	"log"
+	"github.com/gin-gonic/gin"
+	"github.com/watchakorn-18k/scalar-go"
+	scalargin "github.com/watchakorn-18k/scalar-go/middleware/gin"
+)
+
+func main() {
+	r := gin.Default()
+
+	r.GET("/docs", scalargin.Handler(&scalar.Options{
+		SpecURL: "./swagger.yaml",
+		CustomOptions: scalar.CustomOptions{
+			PageTitle: "My API Documentation",
+		},
+		DarkMode: true,
+	}))
+
+	log.Fatal(r.Run(":3000"))
+}
+```
+
+#### Echo
+
+```go
+package main
+
+import (
+	"log"
+	"github.com/labstack/echo/v4"
+	"github.com/watchakorn-18k/scalar-go"
+	scalarecho "github.com/watchakorn-18k/scalar-go/middleware/echo"
+)
+
+func main() {
+	e := echo.New()
+
+	e.GET("/docs", scalarecho.Handler(&scalar.Options{
+		SpecURL: "./swagger.yaml",
+		CustomOptions: scalar.CustomOptions{
+			PageTitle: "My API Documentation",
+		},
+		DarkMode: true,
+	}))
+
+	log.Fatal(e.Start(":3000"))
+}
+```
+
+#### Chi
+
+```go
+package main
+
+import (
+	"log"
+	"net/http"
+	"github.com/go-chi/chi/v5"
+	"github.com/watchakorn-18k/scalar-go"
+	scalarchi "github.com/watchakorn-18k/scalar-go/middleware/chi"
+)
+
+func main() {
+	r := chi.NewRouter()
+
+	r.Get("/docs", scalarchi.Handler(&scalar.Options{
+		SpecURL: "./swagger.yaml",
+		CustomOptions: scalar.CustomOptions{
+			PageTitle: "My API Documentation",
+		},
+		DarkMode: true,
+	}))
+
+	log.Fatal(http.ListenAndServe(":3000", r))
+}
+```
+
+### Manual Usage (without middleware)
+
+You can also use the core `ApiReferenceHTML` function directly:
+
+```go
+package main
+
+import (
+	"log"
+	"github.com/gofiber/fiber/v2"
 	"github.com/watchakorn-18k/scalar-go"
 )
 
 func main() {
 	app := fiber.New()
-	middlewares.Logger(app)
+
 	app.Use("/api/docs", func(c *fiber.Ctx) error {
 		htmlContent, err := scalar.ApiReferenceHTML(&scalar.Options{
 			SpecURL: "./docs/swagger.yaml",
@@ -82,17 +193,9 @@ func main() {
 		c.Type("html")
 		return c.SendString(htmlContent)
 	})
-	app.Use(recover.New())
-	app.Use(cors.New())
-	api := app.Group("/api/")
-	api.Get("/hello", func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
-			"message": "Hello World",
-		})
-	})
+
 	log.Fatal(app.Listen(":3000"))
 }
-
 ```
 ## License
 

@@ -52,10 +52,7 @@ func ApiReferenceHTML(optionsInput *Options) (string, error) {
 			options.SpecContent = content
 		} else {
 			cleanPath := filepath.Clean(optionsInput.SpecURL)
-			parts := strings.Split(cleanPath, string(filepath.Separator))
-
-			specPath := filepath.Join(parts...)
-			absPath, err := filepath.Abs(specPath)
+			absPath, err := filepath.Abs(cleanPath)
 			if err != nil {
 				return "", err
 			}

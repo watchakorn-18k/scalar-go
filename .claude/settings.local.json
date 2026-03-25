@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go test:*)",
+      "Bash(go tool:*)",
+      "Bash(mkdir -p /Users/watchakorn.b/FILE_CODE/LAB/scalar-go/middleware/gin)",
+      "Bash(mkdir -p /Users/watchakorn.b/FILE_CODE/LAB/scalar-go/middleware/echo)",
+      "Bash(mkdir -p /Users/watchakorn.b/FILE_CODE/LAB/scalar-go/middleware/chi)",
+      "Bash(mkdir -p /Users/watchakorn.b/FILE_CODE/LAB/scalar-go/middleware/fiber)",
+      "Bash(go mod:*)"
+    ]
+  }
+}

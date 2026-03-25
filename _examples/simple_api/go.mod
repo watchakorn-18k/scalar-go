@@ -3,9 +3,11 @@ module simple_api
 go 1.22.0
 
 require (
-	github.com/watchakorn-18k/scalar-go v0.0.1
 	github.com/gofiber/fiber/v2 v2.52.5
+	github.com/watchakorn-18k/scalar-go v0.0.0
 )
+
+replace github.com/watchakorn-18k/scalar-go => ../..
 
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect

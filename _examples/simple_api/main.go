@@ -8,26 +8,22 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/watchakorn-18k/scalar-go"
+	scalarfiber "github.com/watchakorn-18k/scalar-go/middleware/fiber"
 )
 
 func main() {
 	app := fiber.New()
 	middlewares.Logger(app)
-	app.Use("/api/docs", func(c *fiber.Ctx) error {
-		htmlContent, err := scalar.ApiReferenceHTML(&scalar.Options{
-			SpecURL: "./docs/swagger.yaml",
-			CustomOptions: scalar.CustomOptions{
-				PageTitle: "Simple API",
-			},
-			DarkMode: true,
-		})
 
-		if err != nil {
-			return err
-		}
-		c.Type("html")
-		return c.SendString(htmlContent)
-	})
+	// Using Scalar Fiber middleware
+	app.Use("/api/docs", scalarfiber.Handler(&scalar.Options{
+		SpecURL: "./docs/swagger.yaml",
+		CustomOptions: scalar.CustomOptions{
+			PageTitle: "Simple API",
+		},
+		DarkMode: true,
+	}))
+
 	app.Use(recover.New())
 	app.Use(cors.New())
 	api := app.Group("/api/")
