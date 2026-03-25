@@ -18,8 +18,28 @@ import (
 //			PageTitle: "My API Documentation",
 //		},
 //	}))
+//
+// With UI authentication:
+//
+//	r.GET("/docs", gin.Handler(&scalar.Options{
+//		SpecURL: "./swagger.yaml",
+//		UIUsername: "admin",
+//		UIPassword: "secret",
+//	}))
 func Handler(options *scalar.Options) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Check if UI authentication is enabled
+		if options.IsUIAuthEnabled() {
+			auth := c.GetHeader("Authorization")
+			username, password, ok := scalar.ParseBasicAuth(auth)
+
+			if !ok || !options.ValidateUICredentials(username, password) {
+				c.Header("WWW-Authenticate", `Basic realm="Scalar API Documentation"`)
+				c.String(http.StatusUnauthorized, "Unauthorized")
+				return
+			}
+		}
+
 		htmlContent, err := scalar.ApiReferenceHTML(options)
 		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())

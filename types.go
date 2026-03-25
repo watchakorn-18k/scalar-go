@@ -117,6 +117,9 @@ type Options struct {
 	PathRouting        string              `json:"pathRouting,omitempty"`
 	BaseServerURL      string              `json:"baseServerUrl,omitempty"`
 	WithDefaultFonts   bool                `json:"withDefaultFonts,omitempty"`
+	ValidateSpec       bool                `json:"-"` // Enable spec validation before rendering (not sent to client)
+	UIUsername         string              `json:"-"` // Username for protecting UI access (not sent to client)
+	UIPassword         string              `json:"-"` // Password for protecting UI access (not sent to client)
 	CustomOptions
 }
 

@@ -27,6 +27,34 @@ go get -u github.com/watchakorn-18k/scalar-go@latest
 
 - **ApiReferenceHTML** 📄: Generates a complete HTML document for API reference. It allows for extensive customization, including themes, layouts, and CDN configuration. It handles both direct specification content and content fetched from a URL, providing error handling for missing specifications.
 
+### Spec Validation ✅
+
+- **ValidateSpec**: Validates OpenAPI/Swagger specifications before rendering to ensure they are correct and well-formed
+- **ValidateSpecFromFile**: Validates spec files from local paths or URLs
+- Supports OpenAPI 2.0 (Swagger), 3.0, and 3.1
+- Supports both JSON and YAML formats
+- Provides detailed error messages with validation failures
+- Can be enabled/disabled per request with `ValidateSpec` option
+
+### Authentication Configuration 🔐
+
+Built-in authentication helpers for easy configuration:
+
+- **API Key Authentication**: Header, Query, or Cookie-based
+- **HTTP Authentication**: Basic, Bearer (JWT), Digest
+- **OAuth 2.0**: Authorization Code, Client Credentials, Implicit, Password flows
+- **OpenID Connect**: Full OpenID Connect support
+- **Multiple Auth Methods**: Combine multiple authentication methods
+
+### UI Access Protection 🔒
+
+Protect your API documentation UI with Basic Authentication:
+
+- **Password Protection**: Prevent unauthorized access to your API documentation
+- **Optional by Default**: No protection required unless explicitly configured
+- **Secure Implementation**: Uses constant-time comparison to prevent timing attacks
+- **Framework Support**: Works with all supported frameworks (Fiber, Gin, Echo, Chi)
+
 ## Customization Options ⚙️
 
 The package allows extensive customization of the generated API reference through the `Options` struct, supporting:
@@ -196,6 +224,347 @@ func main() {
 
 	log.Fatal(app.Listen(":3000"))
 }
+```
+
+## Authentication Configuration 🔐
+
+Scalar Go provides easy-to-use authentication helpers:
+
+### API Key Authentication
+
+```go
+auth := scalar.APIKeyAuth("X-API-Key", scalar.APIKeyInHeader).
+	WithDescription("API key for authentication")
+
+r.GET("/docs", scalargin.Handler(&scalar.Options{
+	SpecURL:        "./swagger.yaml",
+	Authentication: auth.MustJSON(),
+}))
+```
+
+### Bearer Token (JWT) Authentication
+
+```go
+auth := scalar.BearerAuth().
+	WithBearerFormat("JWT").
+	WithDescription("JWT Bearer token authentication")
+
+r.GET("/docs", scalargin.Handler(&scalar.Options{
+	SpecURL:        "./swagger.yaml",
+	Authentication: auth.MustJSON(),
+}))
+```
+
+### Basic HTTP Authentication
+
+```go
+auth := scalar.BasicAuth().
+	WithDescription("Basic HTTP authentication")
+
+r.GET("/docs", scalargin.Handler(&scalar.Options{
+	SpecURL:        "./swagger.yaml",
+	Authentication: auth.MustJSON(),
+}))
+```
+
+### OAuth 2.0 Authentication
+
+```go
+auth := scalar.OAuth2Auth().
+	WithAuthorizationCode(
+		"https://example.com/oauth/authorize",
+		"https://example.com/oauth/token",
+		map[string]string{
+			"read":  "Read access",
+			"write": "Write access",
+		},
+	).
+	WithClientCredentials(
+		"https://example.com/oauth/token",
+		map[string]string{
+			"api": "API access",
+		},
+	)
+
+r.GET("/docs", scalargin.Handler(&scalar.Options{
+	SpecURL:        "./swagger.yaml",
+	Authentication: auth.MustJSON(),
+}))
+```
+
+### OpenID Connect Authentication
+
+```go
+auth := scalar.OpenIDConnectAuth(
+	"https://example.com/.well-known/openid-configuration",
+).WithDescription("OpenID Connect authentication")
+
+r.GET("/docs", scalargin.Handler(&scalar.Options{
+	SpecURL:        "./swagger.yaml",
+	Authentication: auth.MustJSON(),
+}))
+```
+
+### Multiple Authentication Methods
+
+```go
+multiAuth, err := scalar.MultipleAuth(map[string]*scalar.AuthConfig{
+	"apiKey": scalar.APIKeyAuth("X-API-Key", scalar.APIKeyInHeader),
+	"bearer": scalar.BearerAuth().WithBearerFormat("JWT"),
+	"oauth2": scalar.OAuth2Auth().WithAuthorizationCode(...),
+})
+
+r.GET("/docs", scalargin.Handler(&scalar.Options{
+	SpecURL:        "./swagger.yaml",
+	Authentication: multiAuth,
+}))
+```
+
+## UI Access Protection 🔒
+
+Protect your Scalar API documentation UI from unauthorized access using Basic Authentication. This is useful when you want to prevent others from viewing your API specifications.
+
+### Basic Usage
+
+Simply add `UIUsername` and `UIPassword` to your options:
+
+```go
+app.Use("/docs", scalarfiber.Handler(&scalar.Options{
+	SpecURL:    "./swagger.yaml",
+	UIUsername: "admin",
+	UIPassword: "secret123",
+	CustomOptions: scalar.CustomOptions{
+		PageTitle: "Protected API Documentation",
+	},
+}))
+```
+
+Now when users access `/docs`, they'll be prompted for credentials via HTTP Basic Authentication.
+
+### Public and Protected Documentation
+
+You can have both public and protected documentation routes:
+
+```go
+// Public documentation (no auth required)
+app.Use("/docs/public", scalarfiber.Handler(&scalar.Options{
+	SpecURL: "./public-api.yaml",
+	CustomOptions: scalar.CustomOptions{
+		PageTitle: "Public API Documentation",
+	},
+}))
+
+// Protected documentation (requires auth)
+app.Use("/docs/private", scalarfiber.Handler(&scalar.Options{
+	SpecURL:    "./internal-api.yaml",
+	UIUsername: "admin",
+	UIPassword: "secret123",
+	CustomOptions: scalar.CustomOptions{
+		PageTitle: "Internal API Documentation",
+	},
+}))
+```
+
+### Security Features
+
+- **Constant-Time Comparison**: Prevents timing attacks by using `crypto/subtle`
+- **Standard Basic Auth**: Compatible with all browsers and HTTP clients
+- **Optional by Default**: No authentication unless explicitly configured
+- **Per-Route Configuration**: Different credentials for different documentation routes
+
+### Example with All Frameworks
+
+#### Fiber
+```go
+app.Use("/docs", scalarfiber.Handler(&scalar.Options{
+	SpecURL:    "./swagger.yaml",
+	UIUsername: "admin",
+	UIPassword: "secret123",
+}))
+```
+
+#### Gin
+```go
+r.GET("/docs", scalargin.Handler(&scalar.Options{
+	SpecURL:    "./swagger.yaml",
+	UIUsername: "admin",
+	UIPassword: "secret123",
+}))
+```
+
+#### Echo
+```go
+e.GET("/docs", scalarecho.Handler(&scalar.Options{
+	SpecURL:    "./swagger.yaml",
+	UIUsername: "admin",
+	UIPassword: "secret123",
+}))
+```
+
+#### Chi
+```go
+r.Get("/docs", scalarchi.Handler(&scalar.Options{
+	SpecURL:    "./swagger.yaml",
+	UIUsername: "admin",
+	UIPassword: "secret123",
+}))
+```
+
+### Important Notes
+
+- **Not for API Authentication**: This feature protects the documentation UI only, not your actual API endpoints
+- **Use Strong Passwords**: Always use strong, unique passwords in production
+- **HTTPS Recommended**: Basic Auth sends credentials in base64 encoding, use HTTPS in production
+- **Environment Variables**: Store credentials in environment variables, not in code:
+
+```go
+app.Use("/docs", scalarfiber.Handler(&scalar.Options{
+	SpecURL:    "./swagger.yaml",
+	UIUsername: os.Getenv("DOCS_USERNAME"),
+	UIPassword: os.Getenv("DOCS_PASSWORD"),
+}))
+```
+
+### Available Authentication Types
+
+| Type | Helper Function | Description |
+|------|----------------|-------------|
+| API Key | `APIKeyAuth(name, location)` | API key in header, query, or cookie |
+| Bearer | `BearerAuth()` | Bearer token authentication (e.g., JWT) |
+| Basic | `BasicAuth()` | Basic HTTP authentication |
+| OAuth 2.0 | `OAuth2Auth()` | OAuth 2.0 with multiple flows |
+| OpenID Connect | `OpenIDConnectAuth(url)` | OpenID Connect authentication |
+
+### Builder Methods
+
+All authentication configurations support method chaining:
+
+- `.WithDescription(desc)` - Add a description
+- `.WithBearerFormat(format)` - Specify bearer token format (e.g., "JWT")
+- `.WithAuthorizationCode(authURL, tokenURL, scopes)` - Add OAuth 2.0 Authorization Code flow
+- `.WithClientCredentials(tokenURL, scopes)` - Add OAuth 2.0 Client Credentials flow
+- `.WithImplicit(authURL, scopes)` - Add OAuth 2.0 Implicit flow
+- `.WithPassword(tokenURL, scopes)` - Add OAuth 2.0 Password flow
+- `.WithRefreshURL(flow, refreshURL)` - Add refresh URL to OAuth 2.0 flow
+- `.ToJSON()` - Convert to JSON string (returns error)
+- `.MustJSON()` - Convert to JSON string (panics on error)
+
+## Spec Validation ✅
+
+Scalar Go provides built-in validation for OpenAPI/Swagger specifications to ensure they are correct before rendering. This helps catch errors early and provides clear feedback when something is wrong.
+
+### Supported Formats
+
+- ✅ OpenAPI 3.1
+- ✅ OpenAPI 3.0
+- ✅ OpenAPI 2.0 (Swagger)
+- ✅ JSON format
+- ✅ YAML format
+
+### Enable Validation in Middleware
+
+Simply set `ValidateSpec: true` in your options:
+
+```go
+app.Use("/docs", scalarfiber.Handler(&scalar.Options{
+	SpecURL:      "./swagger.yaml",
+	ValidateSpec: true, // Enable validation
+	CustomOptions: scalar.CustomOptions{
+		PageTitle: "My API Documentation",
+	},
+}))
+```
+
+If the spec is invalid, the middleware will return an error response with details about what's wrong.
+
+### Manual Validation
+
+You can also validate specs programmatically:
+
+#### Validate from File
+
+```go
+// Validate a spec file (supports both local paths and URLs)
+err := scalar.ValidateSpecFromFile("./swagger.yaml")
+if err != nil {
+	log.Printf("Spec validation failed: %v", err)
+}
+```
+
+#### Validate from Content
+
+```go
+// Validate spec content directly
+specContent := `
+openapi: 3.0.0
+info:
+  title: My API
+  version: 1.0.0
+paths:
+  /hello:
+    get:
+      responses:
+        '200':
+          description: Success
+`
+
+err := scalar.ValidateSpec(specContent)
+if err != nil {
+	log.Printf("Spec validation failed: %v", err)
+}
+```
+
+#### Validation Endpoint Example
+
+```go
+app.Get("/validate", func(c *fiber.Ctx) error {
+	err := scalar.ValidateSpecFromFile("./swagger.yaml")
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"valid": false,
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"valid":   true,
+		"message": "Spec is valid!",
+	})
+})
+```
+
+### Error Messages
+
+When validation fails, you'll get detailed error messages:
+
+```
+spec validation failed: OpenAPI 3.x validation failed: field info is required
+```
+
+For OpenAPI 2.0:
+```
+spec validation failed: OpenAPI 2.0 validation failed: missing 'info.title' field, missing 'paths' field
+```
+
+### Performance Considerations
+
+- Validation adds a small overhead (typically a few milliseconds)
+- For production with static specs, validate once during startup
+- For dynamic specs or development, enable `ValidateSpec: true`
+- Validation is cached per request, so multiple calls with the same content are fast
+
+### When to Use Validation
+
+**Always validate when:**
+- ✅ Developing and testing API documentation
+- ✅ Accepting user-uploaded spec files
+- ✅ Fetching specs from external sources
+- ✅ Running in development/staging environments
+
+**Optional in:**
+- ⚠️ Production with static, pre-validated specs (for performance)
+- ⚠️ High-traffic endpoints (validate during deployment instead)
+
 ```
 ## License
 

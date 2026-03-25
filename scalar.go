@@ -42,6 +42,8 @@ func ApiReferenceHTML(optionsInput *Options) (string, error) {
 		return "", fmt.Errorf("specURL or specContent must be provided")
 	}
 
+	var specContentStr string
+
 	if options.SpecContent == nil && options.SpecURL != "" {
 
 		if strings.HasPrefix(options.SpecURL, "http") {
@@ -49,6 +51,7 @@ func ApiReferenceHTML(optionsInput *Options) (string, error) {
 			if err != nil {
 				return "", err
 			}
+			specContentStr = content
 			options.SpecContent = content
 		} else {
 			cleanPath := filepath.Clean(optionsInput.SpecURL)
@@ -66,7 +69,28 @@ func ApiReferenceHTML(optionsInput *Options) (string, error) {
 				return "", err
 			}
 
-			options.SpecContent = string(content)
+			specContentStr = string(content)
+			options.SpecContent = specContentStr
+		}
+	} else if options.SpecContent != nil {
+		// Convert SpecContent to string for validation
+		switch spec := options.SpecContent.(type) {
+		case string:
+			specContentStr = spec
+		case func() map[string]interface{}:
+			result := spec()
+			jsonData, _ := json.Marshal(result)
+			specContentStr = string(jsonData)
+		case map[string]interface{}:
+			jsonData, _ := json.Marshal(spec)
+			specContentStr = string(jsonData)
+		}
+	}
+
+	// Validate spec if validation is enabled
+	if options.ValidateSpec && specContentStr != "" {
+		if err := ValidateSpec(specContentStr); err != nil {
+			return "", fmt.Errorf("spec validation failed: %w", err)
 		}
 	}
 
