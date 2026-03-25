@@ -111,13 +111,19 @@ func ApiReferenceHTML(optionsInput *Options) (string, error) {
 		customThemeCss = ""
 	}
 
+	// Build favicon link tag if FaviconURL is provided
+	var faviconTag string
+	if options.CustomOptions.FaviconURL != "" {
+		faviconTag = fmt.Sprintf(`<link rel="icon" href="%s" />`, options.CustomOptions.FaviconURL)
+	}
+
 	return fmt.Sprintf(`
     <!DOCTYPE html>
     <html>
       <head>
         <title>%s</title>
         <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />%s
         <style>%s</style>
       </head>
       <body>
@@ -125,5 +131,5 @@ func ApiReferenceHTML(optionsInput *Options) (string, error) {
         <script src="%s"></script>
       </body>
     </html>
-  `, pageTitle, customThemeCss, dataConfig, specContentHTML, options.CDN), nil
+  `, pageTitle, faviconTag, customThemeCss, dataConfig, specContentHTML, options.CDN), nil
 }

@@ -124,7 +124,9 @@ type Options struct {
 }
 
 type CustomOptions struct {
-	PageTitle string `json:"pageTitle,omitempty"`
+	PageTitle  string `json:"pageTitle,omitempty"`
+	LogoURL    string `json:"logo,omitempty"`    // Custom logo URL or base64 data URI
+	FaviconURL string `json:"favicon,omitempty"` // Custom favicon URL or base64 data URI
 }
 
 // DefaultOptions configures the default settings for API Reference options

@@ -55,6 +55,28 @@ Protect your API documentation UI with Basic Authentication:
 - **Secure Implementation**: Uses constant-time comparison to prevent timing attacks
 - **Framework Support**: Works with all supported frameworks (Fiber, Gin, Echo, Chi)
 
+### Custom Branding 🎨
+
+Customize your API documentation with your own branding:
+
+- **Custom Logo**: Add your company/project logo to the documentation
+- **Custom Favicon**: Set a custom favicon for the browser tab
+- **URL Support**: Use external URLs or local paths for assets
+- **Base64 Support**: Embed images directly as base64 data URIs
+- **SVG Support**: Full support for SVG logos and favicons
+- **Flexible**: Use logo only, favicon only, or both together
+
+### Export Options 📥
+
+Export your API documentation in multiple formats:
+
+- **Markdown Export**: Generate beautiful Markdown documentation with table of contents
+- **HTML Export**: Create standalone HTML documentation
+- **JSON Export**: Export as formatted OpenAPI JSON spec
+- **YAML Export**: Export as OpenAPI YAML spec
+- **Programmatic API**: Export from code or via HTTP endpoints
+- **Customizable**: Include/exclude TOC, examples, and custom titles
+
 ## Customization Options ⚙️
 
 The package allows extensive customization of the generated API reference through the `Options` struct, supporting:
@@ -449,6 +471,143 @@ All authentication configurations support method chaining:
 - `.ToJSON()` - Convert to JSON string (returns error)
 - `.MustJSON()` - Convert to JSON string (panics on error)
 
+## Custom Branding 🎨
+
+Add your own branding to the API documentation with custom logos and favicons.
+
+### Basic Usage
+
+```go
+app.Use("/docs", scalarfiber.Handler(&scalar.Options{
+	SpecURL: "./swagger.yaml",
+	CustomOptions: scalar.CustomOptions{
+		PageTitle:  "My Company API",
+		LogoURL:    "/assets/logo.png",
+		FaviconURL: "/assets/favicon.ico",
+	},
+}))
+```
+
+### Using External URLs
+
+```go
+app.Use("/docs", scalarfiber.Handler(&scalar.Options{
+	SpecURL: "./swagger.yaml",
+	CustomOptions: scalar.CustomOptions{
+		LogoURL:    "https://example.com/logo.svg",
+		FaviconURL: "https://example.com/favicon.png",
+	},
+}))
+```
+
+### Using Base64 Data URIs
+
+Perfect for embedding small logos directly without external files:
+
+```go
+app.Use("/docs", scalarfiber.Handler(&scalar.Options{
+	SpecURL: "./swagger.yaml",
+	CustomOptions: scalar.CustomOptions{
+		// Embed SVG logo as base64
+		LogoURL: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCI+...",
+		// Embed favicon as base64
+		FaviconURL: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA...",
+	},
+}))
+```
+
+### Using SVG Emoji as Favicon
+
+A quick and easy way to add a fun favicon:
+
+```go
+app.Use("/docs", scalarfiber.Handler(&scalar.Options{
+	SpecURL: "./swagger.yaml",
+	CustomOptions: scalar.CustomOptions{
+		FaviconURL: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>",
+	},
+}))
+```
+
+### Logo Only or Favicon Only
+
+You can use either one independently:
+
+```go
+// Just custom logo
+app.Use("/docs/logo", scalarfiber.Handler(&scalar.Options{
+	SpecURL: "./swagger.yaml",
+	CustomOptions: scalar.CustomOptions{
+		LogoURL: "/assets/logo.svg",
+	},
+}))
+
+// Just custom favicon
+app.Use("/docs/favicon", scalarfiber.Handler(&scalar.Options{
+	SpecURL: "./swagger.yaml",
+	CustomOptions: scalar.CustomOptions{
+		FaviconURL: "/assets/favicon.ico",
+	},
+}))
+```
+
+### Supported Formats
+
+#### Logo
+- **Image formats**: PNG, JPG, SVG, GIF, WebP
+- **URLs**: Relative paths, absolute URLs, or base64 data URIs
+- **Recommendation**: Use SVG for best quality at any size
+
+#### Favicon
+- **Image formats**: .ico, .png, .svg, .gif
+- **URLs**: Relative paths, absolute URLs, or base64 data URIs
+- **Recommendation**: Use .ico (32×32 or 16×16) or SVG for best browser compatibility
+
+### Complete Example
+
+```go
+package main
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/watchakorn-18k/scalar-go"
+	scalarfiber "github.com/watchakorn-18k/scalar-go/middleware/fiber"
+)
+
+func main() {
+	app := fiber.New()
+
+	// Serve static assets
+	app.Static("/assets", "./assets")
+
+	// API documentation with custom branding
+	app.Use("/docs", scalarfiber.Handler(&scalar.Options{
+		SpecURL: "./swagger.yaml",
+		CustomOptions: scalar.CustomOptions{
+			PageTitle:  "Acme Corp API Documentation",
+			LogoURL:    "/assets/acme-logo.svg",
+			FaviconURL: "/assets/acme-favicon.ico",
+		},
+		DarkMode: true,
+	}))
+
+	app.Listen(":3000")
+}
+```
+
+### Best Practices
+
+1. **Logo Size**: Keep logos under 200KB for fast loading
+2. **Favicon Format**: Use .ico format for best browser compatibility
+3. **SVG Logos**: Prefer SVG for scalability and smaller file sizes
+4. **Base64**: Use base64 for small images (<10KB) to reduce HTTP requests
+5. **CDN**: Host large assets on a CDN for better performance
+6. **Accessibility**: Ensure sufficient contrast for your logo in both light and dark modes
+
+### Examples
+
+See the complete example at [_examples/branding_example/](/_examples/branding_example/) for more detailed usage.
+
 ## Spec Validation ✅
 
 Scalar Go provides built-in validation for OpenAPI/Swagger specifications to ensure they are correct before rendering. This helps catch errors early and provides clear feedback when something is wrong.
@@ -565,7 +724,170 @@ spec validation failed: OpenAPI 2.0 validation failed: missing 'info.title' fiel
 - ⚠️ Production with static, pre-validated specs (for performance)
 - ⚠️ High-traffic endpoints (validate during deployment instead)
 
+## Export Documentation 📥
+
+Export your API documentation in multiple formats for different use cases.
+
+### Supported Export Formats
+
+- **Markdown** (`.md`) - Perfect for README files, wikis, and documentation sites
+- **HTML** (`.html`) - Standalone HTML documentation
+- **JSON** (`.json`) - OpenAPI specification in JSON format
+- **YAML** (`.yaml`) - OpenAPI specification in YAML format
+
+### Using Export Handlers
+
+Add export endpoints to your API:
+
+#### Fiber
+
+```go
+import scalarfiber "github.com/watchakorn-18k/scalar-go/middleware/fiber"
+
+options := &scalar.Options{
+	SpecURL: "./swagger.yaml",
+}
+
+// Export as Markdown
+app.Get("/docs/export/markdown", scalarfiber.ExportHandler(options, scalar.ExportFormatMarkdown))
+
+// Export as HTML
+app.Get("/docs/export/html", scalarfiber.ExportHandler(options, scalar.ExportFormatHTML))
+
+// Export as JSON
+app.Get("/docs/export/json", scalarfiber.ExportHandler(options, scalar.ExportFormatJSON))
+
+// Export as YAML
+app.Get("/docs/export/yaml", scalarfiber.ExportHandler(options, scalar.ExportFormatYAML))
 ```
+
+#### Gin
+
+```go
+import scalargin "github.com/watchakorn-18k/scalar-go/middleware/gin"
+
+options := &scalar.Options{
+	SpecURL: "./swagger.yaml",
+}
+
+r.GET("/docs/export/markdown", scalargin.ExportHandler(options, scalar.ExportFormatMarkdown))
+r.GET("/docs/export/html", scalargin.ExportHandler(options, scalar.ExportFormatHTML))
+r.GET("/docs/export/json", scalargin.ExportHandler(options, scalar.ExportFormatJSON))
+r.GET("/docs/export/yaml", scalargin.ExportHandler(options, scalar.ExportFormatYAML))
+```
+
+#### Echo
+
+```go
+import scalarecho "github.com/watchakorn-18k/scalar-go/middleware/echo"
+
+options := &scalar.Options{
+	SpecURL: "./swagger.yaml",
+}
+
+e.GET("/docs/export/markdown", scalarecho.ExportHandler(options, scalar.ExportFormatMarkdown))
+e.GET("/docs/export/html", scalarecho.ExportHandler(options, scalar.ExportFormatHTML))
+e.GET("/docs/export/json", scalarecho.ExportHandler(options, scalar.ExportFormatJSON))
+e.GET("/docs/export/yaml", scalarecho.ExportHandler(options, scalar.ExportFormatYAML))
+```
+
+#### Chi
+
+```go
+import scalarchi "github.com/watchakorn-18k/scalar-go/middleware/chi"
+
+options := &scalar.Options{
+	SpecURL: "./swagger.yaml",
+}
+
+r.Get("/docs/export/markdown", scalarchi.ExportHandler(options, scalar.ExportFormatMarkdown))
+r.Get("/docs/export/html", scalarchi.ExportHandler(options, scalar.ExportFormatHTML))
+r.Get("/docs/export/json", scalarchi.ExportHandler(options, scalar.ExportFormatJSON))
+r.Get("/docs/export/yaml", scalarchi.ExportHandler(options, scalar.ExportFormatYAML))
+```
+
+### Programmatic Export
+
+Export documentation directly from code:
+
+```go
+// Load and export spec
+specContent, _ := scalar.ReadSpecContent("./swagger.yaml")
+
+// Export as Markdown with custom options
+exportOptions := &scalar.ExportOptions{
+	Format:          scalar.ExportFormatMarkdown,
+	IncludeTOC:      true,  // Include table of contents
+	IncludeExamples: true,  // Include request/response examples
+	Title:           "My API Documentation",
+}
+
+markdown, err := scalar.ExportSpec(specContent, exportOptions)
+if err != nil {
+	log.Fatal(err)
+}
+
+// Save to file
+os.WriteFile("API_DOCUMENTATION.md", []byte(markdown), 0644)
+```
+
+### Export from File
+
+```go
+// Export directly from a file
+markdown, err := scalar.ExportSpecFromFile("./swagger.yaml", &scalar.ExportOptions{
+	Format: scalar.ExportFormatMarkdown,
+})
+```
+
+### Export Options
+
+Configure export behavior with `ExportOptions`:
+
+```go
+type ExportOptions struct {
+	Format          ExportFormat  // markdown, html, json, yaml
+	IncludeTOC      bool         // Include table of contents (Markdown only)
+	IncludeExamples bool         // Include request/response examples
+	Title           string       // Custom title for export
+}
+```
+
+### Use Cases
+
+**Markdown Export:**
+- Generate README.md for GitHub/GitLab
+- Create documentation for wikis (Confluence, Notion)
+- Version control your documentation
+- Static site generators (Hugo, Jekyll)
+
+**HTML Export:**
+- Offline documentation
+- Internal documentation portals
+- Email documentation (with inline styles)
+- PDF generation (via headless browser)
+
+**JSON/YAML Export:**
+- Download OpenAPI specs
+- Backup specifications
+- Integration with other tools
+- Version control for specs
+
+### Download via Browser
+
+When using the export handlers, files are automatically downloaded:
+
+```
+GET /docs/export/markdown  → downloads api-documentation.md
+GET /docs/export/html      → downloads api-documentation.html
+GET /docs/export/json      → downloads openapi.json
+GET /docs/export/yaml      → downloads openapi.yaml
+```
+
+### Complete Example
+
+Check out the [export example](_examples/export_example) for a complete working example with all export formats.
+
 ## License
 
 This project is forked from [MarceloPetrucio/go-scalar-api-reference](https://github.com/MarceloPetrucio/go-scalar-api-reference) and is licensed under the MIT License.
