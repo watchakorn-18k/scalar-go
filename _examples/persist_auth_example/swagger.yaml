@@ -1,0 +1,104 @@
+openapi: 3.0.0
+info:
+  title: API with Persistent Authentication
+  description: |
+    This API demonstrates the auth persistence feature in Scalar Go.
+
+    **Try it out:**
+    1. Click on any protected endpoint below
+    2. Add Authorization header with value: `Bearer test-token-123`
+    3. Send the request
+    4. Refresh the page
+    5. Your token is still there! ✨
+
+    To clear saved tokens, open browser console and run: `scalarClearAuth()`
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/public:
+    get:
+      summary: Public endpoint
+      description: This endpoint doesn't require authentication
+      security: []
+      tags:
+        - Public
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: This is a public endpoint
+
+  /api/protected:
+    get:
+      summary: Protected endpoint
+      description: |
+        This endpoint requires Bearer token authentication.
+
+        **Test token:** `test-token-123`
+
+        With `PersistAuth: true`, your token will be saved to localStorage
+        and automatically restored when you refresh the page.
+      tags:
+        - Protected
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Success - You are authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You are authenticated!
+                  user:
+                    type: string
+                    example: test-user
+        '401':
+          description: Unauthorized - Missing or invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid token
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Enter your bearer token (test token: `test-token-123`)
+
+        **Auth Persistence Enabled:**
+        Your token will be saved to browser localStorage and
+        automatically restored when you refresh this page.
+
+        **Token expires in:** 24 hours
+
+        **To clear saved tokens:** Run `scalarClearAuth()` in browser console
+
+tags:
+  - name: Public
+    description: Endpoints that don't require authentication
+  - name: Protected
+    description: Endpoints that require Bearer token authentication

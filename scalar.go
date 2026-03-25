@@ -117,6 +117,12 @@ func ApiReferenceHTML(optionsInput *Options) (string, error) {
 		faviconTag = fmt.Sprintf(`<link rel="icon" href="%s" />`, options.CustomOptions.FaviconURL)
 	}
 
+	// Build auth persistence script if enabled
+	var persistAuthScript string
+	if options.PersistAuth {
+		persistAuthScript = PersistAuthScript
+	}
+
 	return fmt.Sprintf(`
     <!DOCTYPE html>
     <html>
@@ -128,8 +134,8 @@ func ApiReferenceHTML(optionsInput *Options) (string, error) {
       </head>
       <body>
         <script id="api-reference" type="application/json" data-configuration="%s">%s</script>
-        <script src="%s"></script>
+        <script src="%s"></script>%s
       </body>
     </html>
-  `, pageTitle, faviconTag, customThemeCss, dataConfig, specContentHTML, options.CDN), nil
+  `, pageTitle, faviconTag, customThemeCss, dataConfig, specContentHTML, options.CDN, persistAuthScript), nil
 }

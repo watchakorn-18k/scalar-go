@@ -120,6 +120,7 @@ type Options struct {
 	ValidateSpec       bool                `json:"-"` // Enable spec validation before rendering (not sent to client)
 	UIUsername         string              `json:"-"` // Username for protecting UI access (not sent to client)
 	UIPassword         string              `json:"-"` // Password for protecting UI access (not sent to client)
+	PersistAuth        bool                `json:"-"` // Enable localStorage persistence for auth tokens (not sent to client)
 	CustomOptions
 }
 

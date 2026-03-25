@@ -36,6 +36,15 @@ go get -u github.com/watchakorn-18k/scalar-go@latest
 - Provides detailed error messages with validation failures
 - Can be enabled/disabled per request with `ValidateSpec` option
 
+### Auth Persistence 💾
+
+- **Auto-save tokens**: Bearer tokens and authentication credentials automatically saved to browser localStorage
+- **Auto-restore**: Tokens restored when page is refreshed
+- **Auto-expire**: Saved tokens expire after 24 hours
+- **Manual clear**: Users can clear saved tokens with `scalarClearAuth()` in browser console
+- **Client-side only**: Tokens stored in browser only, never sent to server
+- **Easy toggle**: Enable with `PersistAuth: true`
+
 ### Authentication Configuration 🔐
 
 Built-in authentication helpers for easy configuration:
@@ -723,6 +732,141 @@ spec validation failed: OpenAPI 2.0 validation failed: missing 'info.title' fiel
 **Optional in:**
 - ⚠️ Production with static, pre-validated specs (for performance)
 - ⚠️ High-traffic endpoints (validate during deployment instead)
+
+## Auth Persistence 💾
+
+Never lose your bearer tokens again! Scalar Go can automatically save authentication credentials to browser localStorage and restore them when you refresh the page.
+
+### ✨ Features
+
+- 💾 **Auto-save** - Bearer tokens and auth credentials automatically saved
+- 🔄 **Auto-restore** - Tokens restored on page refresh
+- ⏰ **Auto-expire** - Saved tokens expire after 24 hours
+- 🗑️ **Manual clear** - Clear tokens with `scalarClearAuth()` in console
+- 🔒 **Secure** - Tokens only stored client-side, never sent to server
+
+### Quick Start
+
+Enable persistence with one line:
+
+```go
+app.Use("/docs", scalarfiber.Handler(&scalar.Options{
+	SpecURL:     "./swagger.yaml",
+	PersistAuth: true, // 🔑 Enable auth persistence!
+}))
+```
+
+### How It Works
+
+1. User enters a bearer token in the API documentation
+2. Token is automatically saved to browser localStorage
+3. User refreshes the page
+4. Token is automatically restored! ✨
+
+### Example
+
+```go
+package main
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/watchakorn-18k/scalar-go"
+	scalarfiber "github.com/watchakorn-18k/scalar-go/middleware/fiber"
+)
+
+func main() {
+	app := fiber.New()
+
+	// With persistence - tokens saved and restored
+	app.Get("/docs", scalarfiber.Handler(&scalar.Options{
+		SpecURL:     "./swagger.yaml",
+		PersistAuth: true, // Enable persistence
+		CustomOptions: scalar.CustomOptions{
+			PageTitle: "My API Docs",
+		},
+	}))
+
+	// Without persistence - tokens lost on refresh
+	app.Get("/docs-temp", scalarfiber.Handler(&scalar.Options{
+		SpecURL:     "./swagger.yaml",
+		PersistAuth: false, // No persistence
+	}))
+
+	app.Listen(":3000")
+}
+```
+
+### Try It Yourself
+
+1. Go to `/docs` in your browser
+2. Enter a bearer token in any protected endpoint
+3. Send a request (it works!)
+4. **Refresh the page** 🔄
+5. Your token is still there! ✨
+
+### Manual Token Management
+
+Users can manage saved tokens from browser console:
+
+```javascript
+// View saved tokens
+localStorage.getItem('scalar_auth_tokens')
+
+// View expiry time
+localStorage.getItem('scalar_auth_expiry')
+
+// Clear all saved tokens
+scalarClearAuth()
+```
+
+### Combined with Other Features
+
+```go
+app.Use("/docs", scalarfiber.Handler(&scalar.Options{
+	SpecURL:      "./swagger.yaml",
+	PersistAuth:  true,  // Save auth tokens
+	ValidateSpec: true,  // Validate spec
+	UIUsername:   "admin", // Protect UI
+	UIPassword:   "secret",
+	DarkMode:     true,
+}))
+```
+
+### Security Notes
+
+- ✅ **Client-side only** - Tokens stored in browser localStorage, not on server
+- ✅ **Auto-expire** - Tokens automatically expire after 24 hours
+- ✅ **No server impact** - Persistence handled entirely in browser
+- ⚠️ **HTTPS recommended** - Use HTTPS in production
+- ⚠️ **Shared computers** - Consider disabling on shared/public computers
+
+### When to Use
+
+**✅ Enable persistence when:**
+- Developing and testing APIs locally
+- Internal tools and dashboards
+- Staging/demo environments
+- Improving developer experience
+
+**⚠️ Consider disabling when:**
+- Public documentation on shared computers
+- High-security requirements
+- Users prefer not to save tokens
+
+### Troubleshooting
+
+**Tokens not persisting?**
+- Verify `PersistAuth: true` is set
+- Check browser console for errors
+- Ensure localStorage is not disabled
+- Private browsing disables localStorage
+
+**Tokens expired?**
+- Tokens auto-expire after 24 hours
+- Clear and re-enter token
+
+**Want different expiry time?**
+- Modify `DEFAULT_EXPIRY_HOURS` in `persist_auth.go`
 
 ## Export Documentation 📥
 
